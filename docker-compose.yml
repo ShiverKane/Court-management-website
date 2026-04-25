@@ -35,8 +35,11 @@ services:
       context: ./frontend
     depends_on:
       - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     ports:
-      - "8080:80"
+      - "5173:5173"
 
 volumes:
   pgdata:
