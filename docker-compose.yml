@@ -1,0 +1,45 @@
+services:
+  oracle-db:
+    image: gvenzl/oracle-xe:21-slim
+    environment:
+      ORACLE_PASSWORD: Oracle123!
+      APP_USER: app
+      APP_USER_PASSWORD: app123
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+      - ./database/init:/container-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+    ports:
+      - "1521:1521"
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:oracle:thin:@//oracle-db:1521/XEPDB1
+      SPRING_DATASOURCE_USERNAME: app
+      SPRING_DATASOURCE_PASSWORD: app123
+      JWT_SECRET: change-this-demo-secret-key-change-this-demo-secret-key
+    depends_on:
+      oracle-db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+
+volumes:
+  oracle-data:
